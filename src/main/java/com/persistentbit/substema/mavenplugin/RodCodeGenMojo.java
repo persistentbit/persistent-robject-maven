@@ -3,13 +3,14 @@ package com.persistentbit.substema.mavenplugin;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.robjects.javagen.GeneratedJava;
-import com.persistentbit.robjects.javagen.JavaGenOptions;
-import com.persistentbit.robjects.javagen.ServiceJavaGen;
-import com.persistentbit.robjects.rod.RodParser;
-import com.persistentbit.robjects.rod.RodTokenType;
-import com.persistentbit.robjects.rod.RodTokenizer;
-import com.persistentbit.robjects.rod.values.RService;
+
+import com.persistentbit.substema.javagen.GeneratedJava;
+import com.persistentbit.substema.javagen.JavaGenOptions;
+import com.persistentbit.substema.javagen.ServiceJavaGen;
+import com.persistentbit.substema.rod.RodParser;
+import com.persistentbit.substema.rod.RodTokenType;
+import com.persistentbit.substema.rod.RodTokenizer;
+import com.persistentbit.substema.rod.values.RService;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -75,7 +76,7 @@ public class RodCodeGenMojo extends AbstractMojo {
                 }
             });
             RodTokenizer tokenizer = new RodTokenizer();
-            JavaGenOptions  genOptions  =   new JavaGenOptions(true,true);
+            JavaGenOptions genOptions  =   new JavaGenOptions(true,true);
             rodFiles.forEach(rf -> {
                 getLog().info("Generating java for " + rf);
                 String packageName = rf.getName().substring(0,rf.getName().length()-".rod".length());
