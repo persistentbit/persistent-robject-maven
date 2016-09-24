@@ -3,18 +3,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.persistentbit</groupId>
-    <artifactId>persistent-robjects-maven</artifactId>
+    <artifactId>substema-maven-plugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>PERSISTENT-ROBJECTS-MAVEN</name>
-    <description>Remote java objects Maven plugin</description>
-    <url>https://github.com/persistentbit/persistent-robjects-maven.git</url>
+    <packaging>maven-plugin</packaging>
+    <name>SUBSTEMA-MAVEN-PLUGIN</name>
+    <description>Maven plugin for Generating java code from ROD definintion</description>
+    <url>https://github.com/persistentbit/substema-maven-plugin.git</url>
 
 
     <scm>
-        <connection>scm:git:git@github.com:persistentbit/persistent-robjects-maven.git</connection>
-        <url>scm:git:git@github.com:persistentbit/persistent-robjects-maven.git</url>
-        <developerConnection>scm:git:git@github.com:persistentbit/persistent-robjects-maven.git</developerConnection>
+        <connection>scm:git:git@github.com:persistentbit/substema-maven-plugin.git</connection>
+        <url>scm:git:git@github.com:persistentbit/substema-maven-plugin.git</url>
+        <developerConnection>scm:git:git@github.com:persistentbit/substema-maven-plugin.git</developerConnection>
       <tag>HEAD</tag>
     </scm>
 
@@ -33,7 +33,7 @@
         </license>
     </licenses>
     <properties>
-        <junit.version>4.12</junit.version>
+        <junit.version>3.8.1</junit.version>
         <persistent-robjects.version>1.0.0-SNAPSHOT</persistent-robjects.version>
     </properties>
 
@@ -78,6 +78,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -88,9 +89,13 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                        </configuration>
                     </execution>
+
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
@@ -105,34 +110,40 @@
         </plugins>
     </build>
     <dependencies>
-
         <dependency>
-            <groupId>com.persistentbit</groupId>
-            <artifactId>persistent-robjects</artifactId>
-            <version>${persistent-robjects.version}</version>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-project</artifactId>
+            <version>2.2.1</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
+        <!--
         <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>2.1.0</version>
+          <groupId>org.apache.maven.plugin-tools</groupId>
+          <artifactId>maven-plugin-annotations</artifactId>
+          <version>3.0</version>
+          <scope>provided</scope>
+
         </dependency>
+        -->
         <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-toolchain</artifactId>
-            <version>1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>2.0.9</version>
+            <groupId>com.persistentbit</groupId>
+            <artifactId>persistent-robjects</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
+
+
+
     <profiles>
         <profile>
             <id>development</id>
