@@ -51,7 +51,7 @@ public class RodCodeGenMojo extends AbstractMojo {
      * @parameter default-value="target/generated-sources/rod"
      * @required
      */
-    @Parameter(defaultValue = "/target/generated-sources/rod",required = true)
+    @Parameter(defaultValue = "target/generated-sources/rod",required = true)
     File outputDirectory;
 
     /*
@@ -103,6 +103,7 @@ public class RodCodeGenMojo extends AbstractMojo {
                         try(FileWriter fw = new FileWriter(dest)){
                             fw.write(g.code);
                         }catch (IOException io){
+                            getLog().error(io);
                             throw new RuntimeException("Can't write to " + dest.getAbsolutePath());
                         }
                     });
