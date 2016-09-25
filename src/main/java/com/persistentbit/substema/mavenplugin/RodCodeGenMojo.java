@@ -14,6 +14,9 @@ import com.persistentbit.substema.rod.values.RService;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
@@ -23,7 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
-/**
+/*
  * Generate sources from a ROD file
  *
  * @goal generate-sources
@@ -31,29 +34,33 @@ import java.util.List;
  *
  * @description Generate sources from a ROD file
  */
+@Mojo(name="generate-sources",defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class RodCodeGenMojo extends AbstractMojo {
-    /**
-     * @parameter expression="${project}"
+    /*
+     * @parameter property="project"
      * @required
      * @readonly
      * @since 1.0
      */
+    @Parameter(property = "project",required = true, readonly = true)
     MavenProject project;
 
 
 
-    /**
+    /*
      * @parameter default-value="target/generated-sources/rod"
      * @required
      */
+    @Parameter(defaultValue = "/target/generated-sources/rod",required = true)
     File outputDirectory;
 
-    /**
+    /*
      * Sources
      *
      * @parameter
      * @required
      */
+    @Parameter(required = true)
     List<String> sources;
 
 
