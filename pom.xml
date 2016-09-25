@@ -78,7 +78,7 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
-            <!--
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -95,7 +95,7 @@
                     </execution>
 
                 </executions>
-            </plugin>-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
@@ -141,6 +141,16 @@
             <artifactId>maven-plugin-annotations</artifactId>
             <version>3.5</version>
             <scope>provided</scope><!-- annotations are needed only to build the plugin -->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>3.3.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-archiver</artifactId>
+            <version>3.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>

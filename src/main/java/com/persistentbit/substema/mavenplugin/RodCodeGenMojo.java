@@ -10,18 +10,22 @@ import com.persistentbit.substema.javagen.ServiceJavaGen;
 import com.persistentbit.substema.rod.RodParser;
 import com.persistentbit.substema.rod.RodTokenType;
 import com.persistentbit.substema.rod.RodTokenizer;
-import com.persistentbit.substema.rod.values.RService;
+import com.persistentbit.substema.rod.values.RSubstema;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,7 +38,11 @@ import java.util.List;
  *
  * @description Generate sources from a ROD file
  */
-@Mojo(name="generate-sources",defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+@Mojo(
+        name="generate-sources",
+        defaultPhase = LifecyclePhase.GENERATE_SOURCES,
+        requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
+)
 public class RodCodeGenMojo extends AbstractMojo {
     /*
      * @parameter property="project"
@@ -67,6 +75,63 @@ public class RodCodeGenMojo extends AbstractMojo {
     public void execute()  throws MojoExecutionException, MojoFailureException {
         try{
             getLog().info("--------------  GENERATING SOURCES --------");
+            ClassLoader classLoader = this.getClass().getClassLoader();
+
+            try
+            {
+                @SuppressWarnings("unchecked")
+                final List<String> classPathElements = project.getTestClasspathElements();
+                URL[] urls = null;
+                if (classPathElements != null && classPathElements.size() > 0)
+                {
+                    urls = new URL[classPathElements.size()];
+                    for (int i = 0; i < urls.length; i++)
+                    {
+                        String cpe = classPathElements.get(i);
+                        URI cpeUri = new File(cpe).toURI();
+                        getLog().info(cpe);
+                        if(new File(cpe).isDirectory()){
+                            cpeUri = new URI(cpeUri.toString() + "/");
+                        }
+                        getLog().info(cpeUri.toString());
+                        urls[i] = cpeUri.toURL();
+                        getLog().info("classpath += '" + urls[i] + "'");
+                    }
+                    classLoader = new URLClassLoader(urls, classLoader);
+
+                    Thread.currentThread().setContextClassLoader(classLoader);
+
+                    //                    //wil: testje mbt CL
+                    //                    // "local" class
+                    //                    Class finClazz = Class
+                    //                            .forName("be.schaubroeck.boekhouding.upgrade.UpgradeActionV0203011Post");
+                    //                    ClassLoader finCL = finClazz.getClassLoader();
+                    //                    // "foreign" class
+                    //                    Class palClazz = Class.forName("be.schaubroeck.pal.upgrade.UpgradeActionV1_3_4");
+                    //                    //hier zal al een exceptie optreden.
+                    //                    ClassLoader palCL = finClazz.getClassLoader();
+
+                }
+            }
+            catch (Exception e)
+            {
+                throw new MojoExecutionException("Error extending the classpath for the dbjup-mojo.", e);
+            }
+
+            File f = new File("/Users/petermuys/develop/persstentbit/substema-api/target/classes");
+
+            getLog().info("Files:");
+            for(File s : f.listFiles()){
+                getLog().info("Found " + s);
+            }
+
+            //URL url = classLoader.getResource("com.persistentbit.substema.api.rod");
+            URL url = classLoader.getResource("com.persistentbit.parser.substema");
+            getLog().info("URL = " + url);
+            String test = new String(Files.readAllBytes(Paths.get(url.toURI())));
+            getLog().info(test);
+
+
 
             if ( !outputDirectory.exists() ){
                 outputDirectory.mkdirs();
@@ -91,7 +156,7 @@ public class RodCodeGenMojo extends AbstractMojo {
                     String code = new String(Files.readAllBytes(Paths.get(rf.toURI())));
                     PList<Token<RodTokenType>> tokens = tokenizer.tokenize(rf.getName(),code);
                     RodParser rodParser = new RodParser(packageName,tokens);
-                    RService service = rodParser.parseService();
+                    RSubstema service = rodParser.parseSubstema();
                     PList<GeneratedJava> genCodeList = ServiceJavaGen.generate(genOptions,packageName,service);
 
                     genCodeList.forEach(g -> {
