@@ -3,12 +3,18 @@ package com.persistentbit.substema.mavenplugin;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Token;
+import com.persistentbit.jjson.mapping.JJMapper;
+import com.persistentbit.jjson.nodes.JJPrinter;
+import com.persistentbit.substema.dependencies.DependencySupplier;
+import com.persistentbit.substema.dependencies.SupplierDef;
+import com.persistentbit.substema.dependencies.SupplierType;
 import com.persistentbit.substema.javagen.GeneratedJava;
 import com.persistentbit.substema.javagen.JavaGenOptions;
 import com.persistentbit.substema.javagen.ServiceJavaGen;
 import com.persistentbit.substema.rod.RodParser;
 import com.persistentbit.substema.rod.RodTokenType;
 import com.persistentbit.substema.rod.RodTokenizer;
+import com.persistentbit.substema.rod.SubstemaCompiler;
 import com.persistentbit.substema.rod.values.RSubstema;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -30,15 +36,15 @@ import java.nio.file.Paths;
 import java.util.List;
 
 /*
- * Generate sources from a ROD file
+ * Generate packages from a ROD file
  *
- * @goal generate-sources
- * @phase generate-sources
+ * @goal generate-packages
+ * @phase generate-packages
  *
- * @description Generate sources from a ROD file
+ * @description Generate packages from a ROD file
  */
 @Mojo(
-        name="generate-sources",
+        name="generate-packages",
         defaultPhase = LifecyclePhase.GENERATE_SOURCES,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
 )
@@ -55,11 +61,14 @@ public class RodCodeGenMojo extends AbstractMojo {
 
 
     /*
-     * @parameter default-value="target/generated-sources/rod"
+     * @parameter default-value="target/generated-packages/rod"
      * @required
      */
-    @Parameter(defaultValue = "target/generated-sources/rod",required = true)
+    @Parameter(defaultValue = "target/generated-sources/substema",required = true)
     File outputDirectory;
+
+    @Parameter(defaultValue = "src/main/resources",required = true)
+    File resourcesDirectory;
 
     /*
      * Sources
@@ -67,15 +76,43 @@ public class RodCodeGenMojo extends AbstractMojo {
      * @parameter
      * @required
      */
-    @Parameter(name="sources",required = true)
-    List<String> sources;
+    @Parameter(name="packages",required = true)
+    List<String> packages;
 
 
     public void execute()  throws MojoExecutionException, MojoFailureException {
         try{
-            getLog().info("--------------  GENERATING SOURCES --------");
-            ClassLoader classLoader = this.getClass().getClassLoader();
+            getLog().info("Compiling Substemas...");
+            PList<SupplierDef> supplierDefs = PList.empty();
+            try{
+                if(resourcesDirectory.exists()){
+                    getLog().info("Adding Dependency Supplier " + SupplierType.folder + " , " + resourcesDirectory.getAbsolutePath());
+                    supplierDefs = supplierDefs.plus(new SupplierDef(SupplierType.folder,resourcesDirectory.getAbsolutePath()));
 
+                }
+                List<String> classPathElements = project.getCompileClasspathElements();
+                if(classPathElements != null){
+                    supplierDefs = supplierDefs.plusAll(PStream.from(classPathElements).map(s -> {
+                        File f = new File(s);
+                        if(f.exists()){
+                            SupplierType type = f.isDirectory() ? SupplierType.folder : SupplierType.archive;
+                            getLog().info("Adding Dependency Supplier " + type + " , " + f.getAbsolutePath());
+                            return new SupplierDef(type,f.getAbsolutePath());
+                        } else {
+                            return null;
+                        }
+                    }).filterNulls());
+                }
+
+            }catch(Exception e){
+                throw new MojoExecutionException("Error building dependencyList",e);
+            }
+            DependencySupplier dependencySupplier = new DependencySupplier(supplierDefs);
+            PList<RSubstema> substemas = SubstemaCompiler.compile(dependencySupplier,PList.from(packages));
+
+            substemas.forEach(ss -> getLog().info(ss.toString()));
+
+            /*ClassLoader classLoader = this.getClass().getClassLoader();
             try
             {
                 @SuppressWarnings("unchecked")
@@ -104,17 +141,41 @@ public class RodCodeGenMojo extends AbstractMojo {
             catch (Exception e)
             {
                 throw new MojoExecutionException("Error extending the classpath for the dbjup-mojo.", e);
-            }
+            }*/
 
 
 
 
             if ( !outputDirectory.exists() ){
-                outputDirectory.mkdirs();
+                if(outputDirectory.mkdirs() == false){
+                    throw new MojoExecutionException("Can't create output folder " + outputDirectory.getAbsolutePath());
+                }
             }
             project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
+            JavaGenOptions genOptions  =   new JavaGenOptions(true,true);
+            //substemas.forEach(ss -> {
+            //    getLog().info("-------- " + ss.getPackageName() + " --------");
+            //    getLog().info(JJPrinter.print(true,new JJMapper().write(ss)));
+            //});
+            substemas.forEach( ss -> {
+                PList<GeneratedJava> genCodeList = ServiceJavaGen.generate(genOptions,ss.getPackageName(),ss);
 
-            PStream<File> rodFiles = PStream.from(sources).map(n -> new File(n));
+                genCodeList.forEach(g -> {
+                    String packagePath = g.name.getPackageName().replace('.',File.separatorChar);
+                    File dest = new File(outputDirectory,packagePath);
+                    if(dest.exists() == false){ dest.mkdirs(); }
+                    dest = new File(dest,g.name.getClassName() + ".java");
+                    getLog().info("Generating " + dest.getAbsolutePath());
+                    try(FileWriter fw = new FileWriter(dest)){
+                        fw.write(g.code);
+                    }catch (IOException io){
+                        getLog().error(io);
+                        throw new RuntimeException("Can't write to " + dest.getAbsolutePath());
+                    }
+                });
+            });
+/*
+            PStream<File> rodFiles = PStream.from(packages).map(n -> new File(n));
             rodFiles.forEach(rf -> {
                 if(rf.exists() == false){
                     getLog().error("Can't find substema file: " + rf.getAbsolutePath());
@@ -155,9 +216,11 @@ public class RodCodeGenMojo extends AbstractMojo {
 
 
             });
+*/
 
-
-        }catch(Exception e){
+        }catch(MojoExecutionException e){
+              throw e;
+        }catch (Exception e){
             getLog().error("General error",e);
 
         }
