@@ -3,7 +3,6 @@ package com.persistentbit.substema.mavenplugin;
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.tokenizer.Token;
-
 import com.persistentbit.substema.javagen.GeneratedJava;
 import com.persistentbit.substema.javagen.JavaGenOptions;
 import com.persistentbit.substema.javagen.ServiceJavaGen;
@@ -68,7 +67,7 @@ public class RodCodeGenMojo extends AbstractMojo {
      * @parameter
      * @required
      */
-    @Parameter(required = true)
+    @Parameter(name="sources",required = true)
     List<String> sources;
 
 
@@ -89,28 +88,17 @@ public class RodCodeGenMojo extends AbstractMojo {
                     {
                         String cpe = classPathElements.get(i);
                         URI cpeUri = new File(cpe).toURI();
-                        getLog().info(cpe);
+                        //getLog().info(cpe);
                         if(new File(cpe).isDirectory()){
                             cpeUri = new URI(cpeUri.toString() + "/");
                         }
-                        getLog().info(cpeUri.toString());
+                        //getLog().info(cpeUri.toString());
                         urls[i] = cpeUri.toURL();
                         getLog().info("classpath += '" + urls[i] + "'");
                     }
                     classLoader = new URLClassLoader(urls, classLoader);
 
                     Thread.currentThread().setContextClassLoader(classLoader);
-
-                    //                    //wil: testje mbt CL
-                    //                    // "local" class
-                    //                    Class finClazz = Class
-                    //                            .forName("be.schaubroeck.boekhouding.upgrade.UpgradeActionV0203011Post");
-                    //                    ClassLoader finCL = finClazz.getClassLoader();
-                    //                    // "foreign" class
-                    //                    Class palClazz = Class.forName("be.schaubroeck.pal.upgrade.UpgradeActionV1_3_4");
-                    //                    //hier zal al een exceptie optreden.
-                    //                    ClassLoader palCL = finClazz.getClassLoader();
-
                 }
             }
             catch (Exception e)
@@ -118,18 +106,6 @@ public class RodCodeGenMojo extends AbstractMojo {
                 throw new MojoExecutionException("Error extending the classpath for the dbjup-mojo.", e);
             }
 
-            File f = new File("/Users/petermuys/develop/persstentbit/substema-api/target/classes");
-
-            getLog().info("Files:");
-            for(File s : f.listFiles()){
-                getLog().info("Found " + s);
-            }
-
-            //URL url = classLoader.getResource("com.persistentbit.substema.api.rod");
-            URL url = classLoader.getResource("com.persistentbit.parser.substema");
-            getLog().info("URL = " + url);
-            String test = new String(Files.readAllBytes(Paths.get(url.toURI())));
-            getLog().info(test);
 
 
 
@@ -141,10 +117,10 @@ public class RodCodeGenMojo extends AbstractMojo {
             PStream<File> rodFiles = PStream.from(sources).map(n -> new File(n));
             rodFiles.forEach(rf -> {
                 if(rf.exists() == false){
-                    getLog().error("Can't find rod file: " + rf.getAbsolutePath());
+                    getLog().error("Can't find substema file: " + rf.getAbsolutePath());
                 }
-                if(rf.getName().toLowerCase().endsWith(".rod") == false){
-                    throw new RuntimeException("Expected *.rod filename");
+                if(rf.getName().toLowerCase().endsWith(".substema") == false){
+                    throw new RuntimeException("Expected *.substema filename");
                 }
             });
             RodTokenizer tokenizer = new RodTokenizer();
