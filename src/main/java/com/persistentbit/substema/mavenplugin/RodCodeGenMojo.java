@@ -2,20 +2,14 @@ package com.persistentbit.substema.mavenplugin;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
-import com.persistentbit.core.tokenizer.Token;
-import com.persistentbit.jjson.mapping.JJMapper;
-import com.persistentbit.jjson.nodes.JJPrinter;
 import com.persistentbit.substema.dependencies.DependencySupplier;
 import com.persistentbit.substema.dependencies.SupplierDef;
 import com.persistentbit.substema.dependencies.SupplierType;
 import com.persistentbit.substema.javagen.GeneratedJava;
 import com.persistentbit.substema.javagen.JavaGenOptions;
 import com.persistentbit.substema.javagen.ServiceJavaGen;
-import com.persistentbit.substema.rod.RodParser;
-import com.persistentbit.substema.rod.RodTokenType;
-import com.persistentbit.substema.rod.RodTokenizer;
-import com.persistentbit.substema.rod.SubstemaCompiler;
-import com.persistentbit.substema.rod.values.RSubstema;
+import com.persistentbit.substema.compiler.SubstemaCompiler;
+import com.persistentbit.substema.compiler.values.RSubstema;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -28,11 +22,6 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 /*
@@ -184,15 +173,15 @@ public class RodCodeGenMojo extends AbstractMojo {
                     throw new RuntimeException("Expected *.substema filename");
                 }
             });
-            RodTokenizer tokenizer = new RodTokenizer();
+            SubstemaTokenizer tokenizer = new SubstemaTokenizer();
             JavaGenOptions genOptions  =   new JavaGenOptions(true,true);
             rodFiles.forEach(rf -> {
                 getLog().info("Generating java for " + rf);
                 String packageName = rf.getName().substring(0,rf.getName().length()-".rod".length());
                 try {
                     String code = new String(Files.readAllBytes(Paths.get(rf.toURI())));
-                    PList<Token<RodTokenType>> tokens = tokenizer.tokenize(rf.getName(),code);
-                    RodParser rodParser = new RodParser(packageName,tokens);
+                    PList<Token<SubstemaTokenType>> tokens = tokenizer.tokenize(rf.getName(),code);
+                    SubstemaParser rodParser = new SubstemaParser(packageName,tokens);
                     RSubstema service = rodParser.parseSubstema();
                     PList<GeneratedJava> genCodeList = ServiceJavaGen.generate(genOptions,packageName,service);
 
