@@ -147,7 +147,7 @@ public class RodCodeGenMojo extends AbstractMojo {
             //    getLog().info(JJPrinter.print(true,new JJMapper().write(ss)));
             //});
             substemas.forEach( ss -> {
-                PList<GeneratedJava> genCodeList = ServiceJavaGen.generate(genOptions,ss.getPackageName(),ss);
+                PList<GeneratedJava> genCodeList = ServiceJavaGen.generate(genOptions,ss);
 
                 genCodeList.forEach(g -> {
                     String packagePath = g.name.getPackageName().replace('.',File.separatorChar);
