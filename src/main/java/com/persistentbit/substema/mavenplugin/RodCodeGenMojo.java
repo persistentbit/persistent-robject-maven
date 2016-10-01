@@ -97,7 +97,8 @@ public class RodCodeGenMojo extends AbstractMojo {
                 throw new MojoExecutionException("Error building dependencyList",e);
             }
             DependencySupplier dependencySupplier = new DependencySupplier(supplierDefs);
-            PList<RSubstema> substemas = SubstemaCompiler.compile(dependencySupplier,PList.from(packages));
+            SubstemaCompiler compiler = new SubstemaCompiler(dependencySupplier);
+            PList<RSubstema> substemas = PList.from(packages).map(p -> compiler.compile(p));
 
             substemas.forEach(ss -> getLog().info(ss.toString()));
 
