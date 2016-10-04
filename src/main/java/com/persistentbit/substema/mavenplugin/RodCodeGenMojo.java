@@ -208,11 +208,10 @@ public class RodCodeGenMojo extends AbstractMojo {
             });
 */
 
-        }catch(MojoExecutionException e){
-              throw e;
+
         }catch (Exception e){
             getLog().error("General error",e);
-
+            throw new MojoExecutionException("Error while generating code:" + e.getMessage(),e);
         }
 
 
