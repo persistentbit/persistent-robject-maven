@@ -2,14 +2,13 @@ package com.persistentbit.substema.mavenplugin;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.substema.compiler.SubstemaCompiler;
+import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
 import com.persistentbit.substema.dependencies.SupplierDef;
 import com.persistentbit.substema.dependencies.SupplierType;
-import com.persistentbit.substema.javagen.GeneratedJava;
 import com.persistentbit.substema.javagen.JavaGenOptions;
 import com.persistentbit.substema.javagen.SubstemaJavaGen;
-import com.persistentbit.substema.compiler.SubstemaCompiler;
-import com.persistentbit.substema.compiler.values.RSubstema;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -20,8 +19,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 
 /*
@@ -71,7 +68,7 @@ public class SubstemaMojo extends AbstractMojo {
             //Compile the source
             SubstemaCompiler compiler = new SubstemaCompiler(dependencySupplier);
             PList<RSubstema> substemas = PList.from(packages)
-                    .map(p -> compiler.compile(p));
+                .map(p -> compiler.compile(p).orElseThrow());
 
             substemas.forEach(ss -> getLog().info(ss.toString()));
 
