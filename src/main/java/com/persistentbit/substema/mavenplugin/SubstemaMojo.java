@@ -4,6 +4,7 @@ import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
 import com.persistentbit.core.result.Result;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
+import com.persistentbit.substema.compiler.SubstemaException;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
 import com.persistentbit.substema.dependencies.SupplierDef;
@@ -68,29 +69,44 @@ public class SubstemaMojo extends AbstractMojo {
 
             //Compile the source
             SubstemaCompiler compiler = new SubstemaCompiler(dependencySupplier);
-            PList<RSubstema> substemas = PList.from(packages)
-                .map(p -> compiler.compile(p).orElseThrow());
+            //PList<RSubstema> substemas = PList.from(packages)
+            //    .map(p -> compiler.compile(p).orElseThrow());
 
-            substemas.forEach(ss -> getLog().info(ss.toString()));
+            //substemas.forEach(ss -> getLog().info(ss.toString()));
 
             //Create output directory
+            /*
             if ( !outputDirectory.exists() ){
                 if(outputDirectory.mkdirs() == false){
-                    throw new MojoExecutionException("Can't create output folder " + outputDirectory.getAbsolutePath());
+                    throw new SubstemaException("Can't create output folder " + outputDirectory.getAbsolutePath());
                 }
-            }
+            }*/
             project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
 
             // GENERATE JAVA
-
             JavaGenOptions genOptions  =   new JavaGenOptions(true,true);
+            PList.from(packages).forEach(packageName -> {
 
-            substemas.forEach(ss -> {
-                PList<Result<File>> result =
-                    SubstemaJavaGen.generateAndWriteToFiles(compiler, genOptions, ss, outputDirectory);
-                result.forEach(rf -> {
-                    rf.ifFailure(f -> getLog().error(f));
-                    rf.ifPresent(f -> getLog().info("Writen java to " + f.getAbsolutePath()));
+                getLog().info("Compiling package " + packageName);
+
+                Result<RSubstema> resSubstema = compiler.compile(packageName);
+
+                resSubstema.ifFailure(exception -> {
+                    getLog().error(exception);
+                    throw new SubstemaException("Error while compiling " + packageName, exception);
+                });
+
+                resSubstema.forEach(substema -> {
+                    SubstemaJavaGen.generateAndWriteToFiles(compiler, genOptions, substema, outputDirectory)
+                        .forEach(rf -> {
+
+                            rf.ifFailure(f -> {
+                                getLog().error(f);
+                                throw new SubstemaException("Error creating file " + f);
+                            });
+
+                            rf.ifPresent(f -> getLog().info("Generated source in " + f.getAbsolutePath()));
+                        });
                 });
             });
         }catch (Exception e){
