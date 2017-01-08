@@ -91,9 +91,9 @@ public class SubstemaMojo extends AbstractMojo {
 
                 Result<RSubstema> resSubstema = compiler.compile(packageName);
 
-                resSubstema.ifFailure(exception -> {
-                    getLog().error(exception);
-                    throw new SubstemaException("Error while compiling " + packageName, exception);
+                resSubstema.ifFailure(failure -> {
+                    getLog().error(failure.getException());
+                    throw new SubstemaException("Error while compiling " + packageName, failure.getException());
                 });
 
                 resSubstema.forEach(substema -> {
@@ -101,11 +101,12 @@ public class SubstemaMojo extends AbstractMojo {
                         .forEach(rf -> {
 
                             rf.ifFailure(f -> {
-                                getLog().error(f);
+                                getLog().error(f.getException());
                                 throw new SubstemaException("Error creating file " + f);
                             });
 
-                            rf.ifPresent(f -> getLog().info("Generated source in " + f.getAbsolutePath()));
+                            rf.ifPresent(success -> getLog()
+                                .info("Generated source in " + success.getValue().getAbsolutePath()));
                         });
                 });
             });
