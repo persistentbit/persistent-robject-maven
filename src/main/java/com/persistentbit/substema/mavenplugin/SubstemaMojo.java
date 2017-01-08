@@ -2,6 +2,7 @@ package com.persistentbit.substema.mavenplugin;
 
 import com.persistentbit.core.collections.PList;
 import com.persistentbit.core.collections.PStream;
+import com.persistentbit.core.result.Result;
 import com.persistentbit.substema.compiler.SubstemaCompiler;
 import com.persistentbit.substema.compiler.values.RSubstema;
 import com.persistentbit.substema.dependencies.DependencySupplier;
@@ -84,9 +85,14 @@ public class SubstemaMojo extends AbstractMojo {
 
             JavaGenOptions genOptions  =   new JavaGenOptions(true,true);
 
-            substemas.forEach( ss ->
-                SubstemaJavaGen.generateAndWriteToFiles(compiler, genOptions,ss,outputDirectory)
-            );
+            substemas.forEach(ss -> {
+                PList<Result<File>> result =
+                    SubstemaJavaGen.generateAndWriteToFiles(compiler, genOptions, ss, outputDirectory);
+                result.forEach(rf -> {
+                    rf.ifFailure(f -> getLog().error(f));
+                    rf.ifPresent(f -> getLog().info("Writen java to " + f.getAbsolutePath()));
+                });
+            });
         }catch (Exception e){
             getLog().error("General error",e);
             throw new MojoExecutionException("Error while generating code:" + e.getMessage(),e);
