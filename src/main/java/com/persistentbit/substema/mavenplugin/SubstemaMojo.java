@@ -96,9 +96,9 @@ public class SubstemaMojo extends AbstractMojo {
                     throw new SubstemaException("Error while compiling " + packageName, failure.getException());
                 });
 
-                resSubstema.forEach(substema -> {
-                    SubstemaJavaGen.generateAndWriteToFiles(compiler, genOptions, substema, outputDirectory)
-                        .forEach(rf -> {
+				resSubstema.ifPresent(substema -> {
+					SubstemaJavaGen.generateAndWriteToFiles(compiler, genOptions, substema.getValue(), outputDirectory)
+						.forEach(rf -> {
 
                             rf.ifFailure(f -> {
                                 getLog().error(f.getException());
